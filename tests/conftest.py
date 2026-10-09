@@ -48,3 +48,36 @@ def three_strains_expected():
         "categorical": np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 1.0], [0.0, 1.0, 0.0]]),
         "mixed": np.array([[0.0, 0.7, 0.8], [0.7, 0.0, 0.5], [0.8, 0.5, 0.0]]),
     }
+
+
+@pytest.fixture
+def three_blocks():
+    """12 штаммов тремя заведомо разделёнными группами.
+
+    Группы разнесены по количественным признакам настолько, что любой разумный
+    метод обязан найти ровно три кластера. Нужны для проверки, что подбор k
+    работает на однозначном случае - прежде чем доверять ему на спорном.
+    """
+    rng = np.random.default_rng(7)
+    centers = {
+        "gut": (0.7, 1.8, 5.5, 47.0, 3.2),
+        "soil": (1.0, 2.8, 7.0, 55.0, 4.5),
+        "water": (1.4, 3.8, 8.5, 63.0, 5.8),
+    }
+    rows = []
+    for source, center in centers.items():
+        for _ in range(4):
+            rows.append(
+                {
+                    "growth_rate": center[0] + rng.normal(0, 0.01),
+                    "product_yield": center[1] + rng.normal(0, 0.02),
+                    "pH_tolerance": center[2] + rng.normal(0, 0.03),
+                    "GC_content": center[3] + rng.normal(0, 0.1),
+                    "genome_size_mbp": center[4] + rng.normal(0, 0.02),
+                    "has_plasmid": 1 if source == "gut" else 0,
+                    "source": source,
+                }
+            )
+    df = pd.DataFrame(rows)
+    df.insert(0, "strain_id", [f"T{i:02d}" for i in range(1, len(df) + 1)])
+    return df
