@@ -60,18 +60,27 @@ WHERE d.name = 'structured';
 
 \echo ''
 \echo '=== 6. Куда попали штаммы с неверной меткой источника ==='
-SELECT s.strain_id, t.ecotype AS "настоящая группа", s.source AS "метка в таблице",
-       ca.cluster AS "кластер",
-       mode() WITHIN GROUP (ORDER BY t2.ecotype) OVER (PARTITION BY ca.cluster)
-           AS "преобладает в кластере"
+-- mode() - сортирующий агрегат, оконной функцией он быть не может,
+-- поэтому преобладающая группа кластера считается отдельным подзапросом.
+WITH run AS (
+    SELECT r.id FROM clustering_run r JOIN dataset d ON d.id = r.dataset_id
+    WHERE d.name = 'structured' LIMIT 1
+), dominant AS (
+    SELECT ca.cluster, mode() WITHIN GROUP (ORDER BY t.ecotype) AS cluster_ecotype
+    FROM cluster_assignment ca
+    JOIN strain_truth t ON t.strain_id = ca.strain_id
+    WHERE ca.run_id = (SELECT id FROM run)
+    GROUP BY ca.cluster
+)
+SELECT s.strain_id AS "штамм", t.ecotype AS "настоящая группа",
+       s.source AS "метка в таблице", ca.cluster AS "кластер",
+       dom.cluster_ecotype AS "преобладает в кластере",
+       (t.ecotype = dom.cluster_ecotype) AS "пошёл за своими"
 FROM strain s
-JOIN strain_truth t   ON t.strain_id = s.id
-JOIN cluster_assignment ca ON ca.strain_id = s.id
-JOIN clustering_run r ON r.id = ca.run_id
-JOIN cluster_assignment ca2 ON ca2.run_id = r.id AND ca2.cluster = ca.cluster
-JOIN strain_truth t2  ON t2.strain_id = ca2.strain_id
+JOIN strain_truth t ON t.strain_id = s.id
+JOIN cluster_assignment ca ON ca.strain_id = s.id AND ca.run_id = (SELECT id FROM run)
+JOIN dominant dom ON dom.cluster = ca.cluster
 WHERE t.source_mismatch
-GROUP BY s.strain_id, t.ecotype, s.source, ca.cluster, t2.ecotype
 ORDER BY s.strain_id;
 
 \echo ''
@@ -79,7 +88,7 @@ ORDER BY s.strain_id;
 SELECT weight_quantitative AS "измеримые", weight_categorical AS "каждая пометка",
        best_k AS "групп", silhouette AS "силуэт",
        ari_vs_truth AS "совпало с группой", ari_vs_source AS "совпало с меткой",
-       CASE WHEN is_assignment THEN '<- веса из условия' ELSE '' END AS ""
+       CASE WHEN is_assignment THEN '<- веса из условия' ELSE '' END AS "пометка"
 FROM weight_sensitivity ws JOIN dataset d ON d.id = ws.dataset_id
 WHERE d.name = 'structured'
 ORDER BY weight_categorical;

@@ -12,6 +12,9 @@ createdb strains
 .venv/bin/python db/load.py --create-schema
 ```
 
+Если `psql` не находится, добавьте его в `PATH`:
+`export PATH="/usr/local/opt/postgresql@16/bin:$PATH"`
+
 Проверка — восемь запросов, по одному на каждый вывод отчёта:
 
 ```bash

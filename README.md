@@ -90,4 +90,4 @@ brew services start postgresql@16 && createdb strains && .venv/bin/python db/loa
 [strains_truth.csv](data/strains_truth.csv) — скрытая истина, в кластеризацию не подаётся.
 
 Окружение: Python 3.9.6, numpy 2.0.2, pandas 2.3.3, scipy 1.13.1, scikit-learn 1.6.1,
-matplotlib 3.9.4. Тестов 86.
+matplotlib 3.9.4, PostgreSQL 16.15. Тестов 103.

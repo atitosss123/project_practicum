@@ -102,7 +102,24 @@ th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; t
 td { font-variant-numeric: tabular-nums; }
 tbody tr { cursor: pointer; }
 tbody tr:hover { background: var(--surface-sunk); }
-tbody tr.on { background: var(--accent-soft); }
+tbody tr.on { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+tbody tr.on td:first-child { font-weight: 600; }
+.detail { margin-top: 12px; }
+.detail .empty { color: var(--ink-soft); font-size: 13.5px; margin: 0; }
+.detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.detail-head h3 { font-size: 19px; }
+.detail-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; }
+.detail-grid div { background: var(--surface-sunk); border-radius: 4px; padding: 9px 11px; }
+.detail-grid .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+                  text-transform: uppercase; color: var(--ink-soft); }
+.detail-grid .v { font-family: var(--font-display); font-size: 19px; font-weight: 700;
+                  font-variant-numeric: tabular-nums; line-height: 1.25; }
+.detail-grid .cmp { font-size: 11.5px; color: var(--ink-soft); }
+.btn { font: inherit; font-size: 13px; padding: 7px 13px; border: 1px solid var(--line);
+       border-radius: 4px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover { background: var(--surface-sunk); }
+.detail-actions { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
 .tag { font-family: var(--font-mono); font-size: 10.5px; padding: 1px 6px; border-radius: 3px;
        background: var(--surface-sunk); color: var(--ink-soft); }
@@ -169,10 +186,12 @@ ul.plain li { margin-bottom: 7px; }
   продукта, в какой кислотности выживает, из чего состоит её ДНК, какого размера геном. Один признак —
   «да или нет»: есть ли плазмида (маленькое дополнительное колечко ДНК). И один — просто название места,
   откуда штамм взяли: почва, вода или кишечник.</p>
-  <p>Нажмите на строку — штамм подсветится на карте ниже.</p>
+  <p>Нажмите на любую строку — ниже появится карточка этой бактерии: куда её отнесли и чем она
+  отличается от своей группы.</p>
   <div class="panel tablewrap">
     <table id="strain-table"><thead></thead><tbody></tbody></table>
   </div>
+  <div class="panel detail" id="strain-detail"></div>
   <p class="note" style="margin-top:12px">У трёх штаммов пометка о месте намеренно неверная — так мы
   проверим, что окажется сильнее: измерения или метка. Они отмечены значком
   <span class="tag warn">метка неверна</span>.</p>
@@ -399,8 +418,72 @@ ul.plain li { margin-bottom: 7px; }
     [...tbody.rows].forEach((row) => row.addEventListener("click", () => {
       const i = +row.dataset.i;
       selected = selected === i ? null : i;
-      drawTable(); drawMap();
+      drawTable(); drawMap(); drawDetail();
     }));
+  }
+
+  /* ---- карточка выбранной бактерии ---- */
+  const LABELS = {
+    growth_rate: ["Скорость роста", ""],
+    product_yield: ["Выход продукта", ""],
+    pH_tolerance: ["Переносимость pH", ""],
+    GC_content: ["Состав ДНК", " %"],
+    genome_size_mbp: ["Размер генома", " млн"],
+  };
+
+  function drawDetail() {
+    const box = document.getElementById("strain-detail");
+    if (selected === null) {
+      box.innerHTML = '<p class="empty">Ни одна бактерия не выбрана. Нажмите строку в таблице выше.</p>';
+      return;
+    }
+    const s = D.strains[selected];
+    const step = current();
+    const order = colorOrder(step);
+    const label = step.labels[selected];
+    const colour = css(order.get(label));
+    const profile = step.profiles.find((p) => p.cluster === label);
+
+    const cells = FEATURES.map(([key]) => {
+      const digits = key === "GC_content" ? 1 : 2;
+      const delta = s[key] - profile[key];
+      const sign = Math.abs(delta) < 0.005 ? "как у группы"
+        : (delta > 0 ? "выше" : "ниже") + " группы на " + Math.abs(delta).toFixed(digits);
+      return `<div><div class="k">${LABELS[key][0]}</div>
+        <div class="v">${s[key].toFixed(digits)}${LABELS[key][1]}</div>
+        <div class="cmp">${sign}</div></div>`;
+    }).join("");
+
+    const warn = s.source_mismatch
+      ? `<div class="verdict warn" style="margin-top:14px">Пометка «${RU_SOURCE[s.source]}» у этой
+         бактерии неверна: на самом деле она из группы «${RU_SOURCE[s.ecotype]}». Проверьте на
+         станции 3, за чем пошла программа — за измерениями или за пометкой.</div>`
+      : "";
+
+    box.innerHTML = `<div class="detail-head">
+        <h3><span class="dot" style="background:${colour};width:12px;height:12px"></span>${s.strain_id}</h3>
+        <span class="tag">группа ${label}, всего в ней ${profile.n_strains}</span>
+        ${s.source_mismatch ? '<span class="tag warn">метка неверна</span>' : ""}
+      </div>
+      <p class="detail-sub">Нашли ${RU_SOURCE[s.source] === "кишечник" ? "в кишечнике" :
+        RU_SOURCE[s.source] === "почва" ? "в почве" : "в воде"} ·
+        плазмида ${s.has_plasmid ? "есть" : "отсутствует"} ·
+        в группе плазмида у ${Math.round(profile.plasmid_share * 100)}%</p>
+      <div class="detail-grid">${cells}</div>
+      <div class="detail-actions">
+        <button class="btn" id="show-on-map">Показать на карте</button>
+        <button class="btn" id="clear-pick">Снять выбор</button>
+      </div>`;
+
+    document.getElementById("show-on-map").addEventListener("click", () => {
+      document.getElementById("map").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+    document.getElementById("clear-pick").addEventListener("click", () => {
+      selected = null; drawTable(); drawMap(); drawDetail();
+    });
   }
 
   /* ---- карта ---- */
@@ -421,14 +504,23 @@ ul.plain li { margin-bottom: 7px; }
       const s = D.strains[i];
       const colour = css(order.get(step.labels[i]));
       const on = selected === i;
-      parts.push(`<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="${on ? 13 : 9}"
+      parts.push(`<circle data-i="${i}" cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="${on ? 13 : 9}"
         fill="${colour}" stroke="${s.source_mismatch ? css("--ink") : css("--surface")}"
         stroke-width="${s.source_mismatch ? 2.5 : 1.5}" ${s.source_mismatch ? 'stroke-dasharray="3 2"' : ""}/>`);
       parts.push(`<text x="${(sx(p[0]) + 12).toFixed(1)}" y="${(sy(p[1]) + 4).toFixed(1)}"
         font-family="${"IBM Plex Mono, monospace"}" font-size="10.5"
         font-weight="${on ? 600 : 400}" fill="${css("--ink-soft")}">${s.strain_id}</text>`);
     });
-    document.getElementById("map").innerHTML = parts.join("");
+    const map = document.getElementById("map");
+    map.innerHTML = parts.join("");
+    map.querySelectorAll("circle[data-i]").forEach((node) => {
+      node.style.cursor = "pointer";
+      node.addEventListener("click", () => {
+        const i = +node.dataset.i;
+        selected = selected === i ? null : i;
+        drawTable(); drawMap(); drawDetail();
+      });
+    });
     const seen = [...new Set(step.labels)].sort((a, b) => a - b);
     document.getElementById("map-legend").innerHTML = seen.map((label) => {
       const count = step.labels.filter((x) => x === label).length;
@@ -628,7 +720,9 @@ ul.plain li { margin-bottom: 7px; }
       `Группы настоящие.`;
   }
 
-  function redraw() { drawTable(); drawMap(); drawSilhouette(); drawProfiles(); drawReadout(); drawPair(); }
+  function redraw() {
+    drawTable(); drawMap(); drawDetail(); drawSilhouette(); drawProfiles(); drawReadout(); drawPair();
+  }
 
   document.getElementById("weight").addEventListener("input", redraw);
   selA.addEventListener("change", drawPair);

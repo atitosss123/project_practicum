@@ -169,3 +169,46 @@ def test_enum_rejects_an_unknown_source(db):
         with pytest.raises(Exception):
             cursor.execute("SELECT 'sediment'::isolation_source")
         cursor.execute("ROLLBACK TO SAVEPOINT probe")
+
+
+def _statements(path: Path):
+    """Запросы из файла без мета-команд psql."""
+    body = "\n".join(
+        line for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.lstrip().startswith("\\")
+    )
+    return [chunk.strip() for chunk in body.split(";") if chunk.strip()]
+
+
+def test_every_demo_query_runs(db):
+    """Запросы из queries.sql должны выполняться, а не падать при показе.
+
+    Этот тест поймал две реальные ошибки: mode() WITHIN GROUP использовался
+    как оконная функция, чего PostgreSQL не допускает, и пустое имя колонки
+    AS "" вызывало ошибку разбора.
+    """
+    statements = _statements(ROOT / "db" / "queries.sql")
+    assert len(statements) == 8, f"ожидалось 8 запросов, найдено {len(statements)}"
+    with db.cursor() as cursor:
+        for number, statement in enumerate(statements, 1):
+            cursor.execute("SAVEPOINT q")
+            try:
+                cursor.execute(statement)
+                assert cursor.fetchall() is not None
+            except Exception as error:  # noqa: BLE001
+                pytest.fail(f"запрос {number} упал: {error}\n{statement[:200]}")
+            finally:
+                cursor.execute("ROLLBACK TO SAVEPOINT q")
+
+
+def test_row_counts_match_the_documented_ones(db):
+    """Числа в db/README.md должны соответствовать тому, что реально в базе."""
+    documented = {
+        "dataset": 2, "strain": 40, "strain_truth": 20, "pair_distance": 380,
+        "clustering_run": 2, "silhouette_score": 18, "cluster_assignment": 40,
+        "cluster_profile": 8, "projection": 40, "weight_sensitivity": 14,
+    }
+    with db.cursor() as cursor:
+        for table, expected in documented.items():
+            cursor.execute(f"SELECT count(*) FROM {table}")
+            assert cursor.fetchone()[0] == expected, table
