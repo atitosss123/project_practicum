@@ -1,0 +1,640 @@
+<title>Стенд кластеризации штаммов</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Компоновка: вертикальная «лабораторная скамья» — станции идут сверху вниз,
+   каждая отвечает на один вопрос. Цвета кластеров взяты из сред обитания:
+   глина кишечника, бирюза воды, охра почвы. */
+:root {
+  --bg: #F5F6F2;
+  --surface: #FFFFFF;
+  --surface-sunk: #ECEEE7;
+  --ink: #1C241F;
+  --ink-soft: #5E6861;
+  --line: #DCE0D6;
+  --accent: #3A6B52;
+  --accent-soft: #E3EDE6;
+  --warn: #9C5A1E;
+  --c1: #B0485C;
+  --c2: #2C7A87;
+  --c3: #A6762C;
+  --c4: #6A5B9A;
+  --c5: #4F7A3A;
+  --c6: #8C8C8C;
+  --font-display: "Literata", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141815;
+    --surface: #1D221E;
+    --surface-sunk: #272D28;
+    --ink: #E8EBE6;
+    --ink-soft: #9DA79F;
+    --line: #333A34;
+    --accent: #7FBF9A;
+    --accent-soft: #223029;
+    --c1: #E0788A;
+    --c2: #5FB8C4;
+    --c3: #D6A24A;
+    --c4: #A597D6;
+    --c5: #86B86C;
+    --c6: #A8A8A8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141815;
+  --surface: #1D221E;
+  --surface-sunk: #272D28;
+  --ink: #E8EBE6;
+  --ink-soft: #9DA79F;
+  --line: #333A34;
+  --accent: #7FBF9A;
+  --accent-soft: #223029;
+  --c1: #E0788A;
+  --c2: #5FB8C4;
+  --c3: #D6A24A;
+  --c4: #A597D6;
+  --c5: #86B86C;
+  --c6: #A8A8A8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+.wrap { max-width: 1060px; margin: 0 auto; padding-inline: 20px; padding-block: 0 72px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5.5vw, 46px); line-height: 1.12; font-weight: 700; letter-spacing: -0.015em; }
+h2 { font-size: clamp(22px, 3.4vw, 29px); line-height: 1.2; font-weight: 600; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0 0 14px; max-width: 68ch; }
+a { color: var(--accent); }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px;
+}
+header.hero { padding-block: 56px 36px; border-bottom: 1px solid var(--line); }
+.lede { font-size: 17.5px; color: var(--ink-soft); max-width: 62ch; margin-top: 16px; }
+section { padding-block: 44px; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.sec-head { margin-bottom: 20px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 28px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+.tile .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.tile .v { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.tile .n { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; line-height: 1.4; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 20px; }
+.grid2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: right; padding: 7px 9px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+     color: var(--ink-soft); font-weight: 500; vertical-align: bottom; }
+td { font-variant-numeric: tabular-nums; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-sunk); }
+tbody tr.on { background: var(--accent-soft); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.tag { font-family: var(--font-mono); font-size: 10.5px; padding: 1px 6px; border-radius: 3px;
+       background: var(--surface-sunk); color: var(--ink-soft); }
+.tag.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.sliderbox { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 20px; margin-bottom: 18px; }
+.sliderbox label { display: block; font-weight: 600; margin-bottom: 4px; }
+.sliderbox .hint { font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; }
+input[type=range] { width: 100%; accent-color: var(--accent); height: 26px; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); margin-top: -4px; }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 16px; }
+.readout div { background: var(--surface-sunk); border-radius: 4px; padding: 10px 12px; }
+.readout .k { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+.readout .v { font-family: var(--font-display); font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.verdict { margin-top: 16px; padding: 13px 15px; border-left: 3px solid var(--accent); background: var(--accent-soft); font-size: 14px; border-radius: 0 4px 4px 0; }
+.verdict.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 11%, transparent); }
+svg { display: block; max-width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 18px; }
+.pcard { background: var(--surface); border: 1px solid var(--line); border-top-width: 3px; border-radius: 4px; padding: 14px 16px; }
+.pcard h3 { font-size: 15px; margin-bottom: 2px; }
+.pcard .sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+.pcard dl { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; margin: 0; font-size: 12.5px; }
+.pcard dt { color: var(--ink-soft); }
+.pcard dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.pickers { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+.pickers div { display: flex; flex-direction: column; gap: 4px; }
+.pickers span { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+select { font-family: var(--font-mono); font-size: 14px; padding: 7px 9px; border: 1px solid var(--line);
+         border-radius: 4px; background: var(--surface); color: var(--ink); }
+.stack { display: flex; height: 34px; border-radius: 3px; overflow: hidden; border: 1px solid var(--line); }
+.stack i { display: block; font-style: normal; }
+.breakdown { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 12px; font-size: 13px; margin-top: 12px; align-items: center; }
+.breakdown b { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.note { font-size: 13px; color: var(--ink-soft); }
+figure { margin: 0; }
+figure img { width: 100%; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+figcaption { font-size: 12.5px; color: var(--ink-soft); margin-top: 7px; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+ul.plain { margin: 0 0 14px; padding-left: 20px; max-width: 68ch; }
+ul.plain li { margin-bottom: 7px; }
+.kbd { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-sunk); padding: 1px 5px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { circle, rect { transition: all .18s ease; } }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Проектный практикум · задача 5</p>
+  <h1>Как 20 бактерий разложить по полочкам</h1>
+  <p class="lede">У нас есть 20 штаммов бактерий. Про каждый известно семь разных вещей — и измеренные
+  числа, и просто пометки вроде «нашли в почве». Задача: сгруппировать похожие, причём компьютер должен
+  сам решить, сколько групп получится. Здесь можно покрутить всё руками и увидеть, где метод ломается.</p>
+  <div class="tiles" id="hero-tiles"></div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 1</p>
+    <h2>Что мы знаем про каждую бактерию</h2>
+  </div>
+  <p>Семь признаков, и они разной природы. Пять — измеренные числа: как быстро растёт, сколько даёт
+  продукта, в какой кислотности выживает, из чего состоит её ДНК, какого размера геном. Один признак —
+  «да или нет»: есть ли плазмида (маленькое дополнительное колечко ДНК). И один — просто название места,
+  откуда штамм взяли: почва, вода или кишечник.</p>
+  <p>Нажмите на строку — штамм подсветится на карте ниже.</p>
+  <div class="panel tablewrap">
+    <table id="strain-table"><thead></thead><tbody></tbody></table>
+  </div>
+  <p class="note" style="margin-top:12px">У трёх штаммов пометка о месте намеренно неверная — так мы
+  проверим, что окажется сильнее: измерения или метка. Они отмечены значком
+  <span class="tag warn">метка неверна</span>.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 2</p>
+    <h2>Как измерить, насколько две бактерии непохожи</h2>
+  </div>
+  <p>Нельзя просто сложить «скорость роста» и «нашли в почве» — это разные вещи. Поэтому непохожесть
+  считают по частям: отдельно по пяти числам, отдельно по плазмиде, отдельно по месту находки. Потом три
+  части складывают с весами. По условию задачи веса такие: <b>0.6</b> на числа, <b>0.2</b> на плазмиду,
+  <b>0.2</b> на место.</p>
+  <p>Выберите любые два штамма и посмотрите, из чего складывается их непохожесть.</p>
+  <div class="panel">
+    <div class="pickers">
+      <div><span>Штамм A</span><select id="pair-a"></select></div>
+      <div><span>Штамм B</span><select id="pair-b"></select></div>
+    </div>
+    <div class="stack" id="pair-stack"></div>
+    <div class="breakdown" id="pair-breakdown"></div>
+  </div>
+  <div class="verdict warn" style="max-width:68ch">
+    Обратите внимание на две нижние части. Плазмида даёт либо <b>0</b>, либо <b>1</b> — третьего не
+    дано: или она есть у обоих, или нет. Место находки — то же самое. Получается, что 40% итогового
+    числа работают как выключатель, а не как плавная шкала. Это и создаёт проблему, которую видно
+    на следующей станции.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 3 · главная</p>
+    <h2>Покрутите веса и посмотрите, что будет</h2>
+  </div>
+  <p>Ползунок меняет, насколько важны пометки (плазмида и место находки) по сравнению с измеренными
+  числами. Слева — пометки вообще не учитываем. Справа — учитываем сильнее, чем в условии задачи.
+  Положение <span class="kbd">0.20</span> — это веса из условия.</p>
+
+  <div class="sliderbox">
+    <label for="weight">Вес каждой пометки</label>
+    <p class="hint">Плазмида и место находки получают одинаковый вес; остаток достаётся измеренным числам.</p>
+    <input type="range" id="weight" min="0" max="30" step="1" value="20">
+    <div class="ticks"><span>0.00 — только измерения</span><span>0.20 — условие задачи</span><span>0.30</span></div>
+    <div class="readout" id="readout"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>Карта штаммов</h3>
+      <p class="note">Похожие бактерии стоят рядом. Цвет — найденная группа. Обводка — штамм с неверной
+      пометкой о месте находки.</p>
+      <svg id="map" viewBox="0 0 520 420" role="img" aria-label="Карта штаммов по группам"></svg>
+      <div class="legend" id="map-legend"></div>
+    </div>
+    <div class="panel">
+      <h3>Сколько групп делать?</h3>
+      <p class="note">Компьютер пробует от 2 до 10 групп и для каждого варианта считает «кучность» —
+      насколько плотно легли группы. Выбирает вариант с самым высоким столбиком.</p>
+      <svg id="sil" viewBox="0 0 420 260" role="img" aria-label="Кучность при разном числе групп"></svg>
+      <p class="note" id="sil-note"></p>
+    </div>
+  </div>
+
+  <div class="profiles" id="profiles"></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 4</p>
+    <h2>Почему пометка перевешивает пять измерений</h2>
+  </div>
+  <p>Выглядит странно: у измерений вес 0.6, у места находки всего 0.2, втрое меньше. Но посмотрите, как
+  это работает на самом деле.</p>
+  <div class="panel">
+    <svg id="gap" viewBox="0 0 640 230" role="img" aria-label="Сравнение разделяющей силы признаков"></svg>
+  </div>
+  <p style="margin-top:18px">Все пять измеренных чисел вместе раздвигают разные группы бактерий на
+  <b id="gap-val"></b>. А одно-единственное несовпадение места находки добавляет <b>0.200</b> — и
+  добавляет <em>всегда целиком</em>, независимо от того, похожи бактерии на самом деле или нет.</p>
+  <p>Это как если бы при сравнении двух людей рост, вес и возраст учитывались постепенно, а разные
+  города проживания сразу давали фиксированный штраф размером почти со всю остальную разницу.</p>
+  <div class="verdict warn">
+    <b>Вывод.</b> Вес признака — это не то же самое, что его влияние. Признак-выключатель с весом 0.2
+    влияет сильнее, чем пять плавных признаков с весом 0.6, потому что срабатывает всегда на полную.
+    Если поставить вес 0.15 вместо 0.20, группы находятся правильно — проверьте ползунком.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 5</p>
+    <h2>А вдруг эти группы — просто случайность?</h2>
+  </div>
+  <p>Двадцать точек всегда можно как-то разложить на кучки, даже если это чистый шум. Поэтому «кучность
+  получилась высокая» само по себе ничего не доказывает. Нужна проверка.</p>
+  <p>Проверяем так: берём наши же данные и много раз перемешиваем значения внутри каждого столбца.
+  Бактерии превращаются в случайные наборы реально встречавшихся чисел — связи рвутся, а сами числа
+  остаются теми же. Если наши группы настоящие, их кучность должна оказаться выше, чем у перемешанных.</p>
+  <div class="panel">
+    <svg id="null" viewBox="0 0 640 250" role="img" aria-label="Кучность на перемешанных данных"></svg>
+  </div>
+  <p id="null-text" style="margin-top:16px"></p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Станция 6</p>
+    <h2>Что посчитала программа</h2>
+  </div>
+  <p>Эти изображения строит расчётная часть проекта при весах из условия задачи.</p>
+  <div class="figs">
+    <figure>
+      <img src="dendrogram.png" alt="Дендрограмма объединения штаммов">
+      <figcaption>Дерево объединений. Снизу — отдельные штаммы, выше они сливаются в группы.
+      Красная линия — где дерево разрезали, чтобы получить три группы.</figcaption>
+    </figure>
+    <figure>
+      <img src="silhouette_profile.png" alt="Кучность при разном числе групп">
+      <figcaption>Кучность по числу групп. Красным отмечены варианты, которые между собой
+      практически не различаются.</figcaption>
+    </figure>
+    <figure>
+      <img src="mds_scatter.png" alt="Карта штаммов">
+      <figcaption>Карта штаммов по той самой мере непохожести, по которой их и группировали.</figcaption>
+    </figure>
+    <figure>
+      <img src="pca_scatter.png" alt="Главные компоненты">
+      <figcaption>Главные компоненты — требование условия задачи. Строятся только по измеренным
+      числам, поэтому группы здесь могут выглядеть перемешанными.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Итог</p>
+    <h2>Три вещи, которые мы выяснили</h2>
+  </div>
+  <ul class="plain">
+    <li><b>Группы нашлись, их три.</b> Они осмысленны: почвенные бактерии растут медленно, но имеют
+    крупный геном; кишечные растут быстро и почти все несут плазмиду; водные дают много продукта при
+    самом мелком геноме.</li>
+    <li><b>Число групп определено неуверенно.</b> Варианты «2 группы», «3 группы» и «5 групп» по
+    кучности почти не различаются — разница меньше одной сотой. Выбор в пользу трёх подтверждается не
+    кучностью, а тем, что он совпал с настоящим устройством данных.</li>
+    <li><b>Схема весов из условия даёт сбой.</b> Разбиение точнее повторяет написанную в таблице
+    пометку о месте находки, чем настоящие свойства бактерий. Из трёх штаммов с неверной пометкой за
+    своими настоящими сородичами пошёл только один.</li>
+  </ul>
+  <p class="note" style="margin-top:20px">Расчёт, данные и исходный код — в репозитории проекта.
+  Все числа на этой странице получены одним прогоном и не вводились руками.</p>
+</section>
+
+</div>
+
+<script id="payload" type="application/json">__DATA__</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("payload").textContent);
+  const PAL = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6"];
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const FEATURES = [
+    ["growth_rate", "рост"],
+    ["product_yield", "продукт"],
+    ["pH_tolerance", "pH"],
+    ["GC_content", "GC, %"],
+    ["genome_size_mbp", "геном"],
+  ];
+  const RU_SOURCE = { gut: "кишечник", soil: "почва", water: "вода" };
+  const n = D.strains.length;
+  let selected = null;
+
+  /* Номер группы от прогона к прогону произвольный. Чтобы цвета не прыгали
+     при движении ползунка, упорядочиваем группы по положению их центра. */
+  function colorOrder(step) {
+    const centres = new Map();
+    step.labels.forEach((label, i) => {
+      if (!centres.has(label)) centres.set(label, []);
+      centres.get(label).push(step.mds[i][0]);
+    });
+    const sorted = [...centres.entries()]
+      .map(([label, xs]) => [label, xs.reduce((a, b) => a + b, 0) / xs.length])
+      .sort((a, b) => a[1] - b[1]);
+    const map = new Map();
+    sorted.forEach(([label], i) => map.set(label, PAL[i % PAL.length]));
+    return map;
+  }
+
+  const stepFor = (v) => D.steps[v];
+  const current = () => stepFor(+document.getElementById("weight").value);
+
+  /* ---- шапка ---- */
+  const ref = D.steps.find((s) => Math.abs(s.share - D.reference_share) < 1e-9);
+  document.getElementById("hero-tiles").innerHTML = [
+    ["Найдено групп", ref.best_k, "по 6, 7 и 7 бактерий"],
+    ["Кучность", ref.silhouette.toFixed(3), "на шуме бывает до " + D.noise_baseline.scores.reduce((a, b) => Math.max(a, b)).toFixed(2)],
+    ["Случайность исключена", "p = " + D.significance.p_value.toFixed(3), "из " + D.significance.n_draws + " перемешиваний"],
+    ["Совпало с правдой", ref.ari_ecotype.toFixed(2), "а с пометкой — " + ref.ari_source.toFixed(2)],
+  ].map(([k, v, note]) =>
+    `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${note}</div></div>`
+  ).join("");
+
+  /* ---- таблица штаммов ---- */
+  const thead = document.querySelector("#strain-table thead");
+  thead.innerHTML = "<tr><th>Штамм</th>" + FEATURES.map((f) => `<th>${f[1]}</th>`).join("") +
+    "<th>плазмида</th><th>место находки</th></tr>";
+  const tbody = document.querySelector("#strain-table tbody");
+
+  function drawTable() {
+    const step = current();
+    const order = colorOrder(step);
+    tbody.innerHTML = D.strains.map((s, i) => {
+      const colour = css(order.get(step.labels[i]));
+      const warn = s.source_mismatch ? ' <span class="tag warn">метка неверна</span>' : "";
+      return `<tr data-i="${i}" class="${selected === i ? "on" : ""}">
+        <td><span class="dot" style="background:${colour}"></span>${s.strain_id}</td>` +
+        FEATURES.map((f) => `<td>${s[f[0]].toFixed(f[0] === "GC_content" ? 1 : 2)}</td>`).join("") +
+        `<td>${s.has_plasmid ? "есть" : "нет"}</td>
+         <td style="text-align:left">${RU_SOURCE[s.source]}${warn}</td></tr>`;
+    }).join("");
+    [...tbody.rows].forEach((row) => row.addEventListener("click", () => {
+      const i = +row.dataset.i;
+      selected = selected === i ? null : i;
+      drawTable(); drawMap();
+    }));
+  }
+
+  /* ---- карта ---- */
+  const allX = D.steps.flatMap((s) => s.mds.map((p) => p[0]));
+  const allY = D.steps.flatMap((s) => s.mds.map((p) => p[1]));
+  const ext = (a) => [Math.min(...a), Math.max(...a)];
+  const [x0, x1] = ext(allX), [y0, y1] = ext(allY);
+  const padv = Math.max(x1 - x0, y1 - y0) * 0.09;
+
+  function drawMap() {
+    const step = current();
+    const order = colorOrder(step);
+    const W = 520, H = 420, M = 26;
+    const sx = (v) => M + ((v - x0 + padv) / (x1 - x0 + 2 * padv)) * (W - 2 * M);
+    const sy = (v) => H - M - ((v - y0 + padv) / (y1 - y0 + 2 * padv)) * (H - 2 * M);
+    const parts = [`<rect x="0" y="0" width="${W}" height="${H}" fill="${css("--surface-sunk")}" rx="4"/>`];
+    step.mds.forEach((p, i) => {
+      const s = D.strains[i];
+      const colour = css(order.get(step.labels[i]));
+      const on = selected === i;
+      parts.push(`<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="${on ? 13 : 9}"
+        fill="${colour}" stroke="${s.source_mismatch ? css("--ink") : css("--surface")}"
+        stroke-width="${s.source_mismatch ? 2.5 : 1.5}" ${s.source_mismatch ? 'stroke-dasharray="3 2"' : ""}/>`);
+      parts.push(`<text x="${(sx(p[0]) + 12).toFixed(1)}" y="${(sy(p[1]) + 4).toFixed(1)}"
+        font-family="${"IBM Plex Mono, monospace"}" font-size="10.5"
+        font-weight="${on ? 600 : 400}" fill="${css("--ink-soft")}">${s.strain_id}</text>`);
+    });
+    document.getElementById("map").innerHTML = parts.join("");
+    const seen = [...new Set(step.labels)].sort((a, b) => a - b);
+    document.getElementById("map-legend").innerHTML = seen.map((label) => {
+      const count = step.labels.filter((x) => x === label).length;
+      return `<span><i class="dot" style="background:${css(order.get(label))}"></i>группа ${label} — ${count}</span>`;
+    }).join("");
+  }
+
+  /* ---- кучность по числу групп ---- */
+  function drawSilhouette() {
+    const step = current();
+    const ks = Object.keys(step.scores).map(Number).sort((a, b) => a - b);
+    const W = 420, H = 260, M = { l: 34, r: 10, t: 14, b: 32 };
+    const top = Math.max(...ks.map((k) => step.scores[k])) * 1.2;
+    const bw = (W - M.l - M.r) / ks.length;
+    const parts = [];
+    [0, top / 2, top].forEach((v) => {
+      const y = H - M.b - (v / top) * (H - M.t - M.b);
+      parts.push(`<line x1="${M.l}" y1="${y.toFixed(1)}" x2="${W - M.r}" y2="${y.toFixed(1)}"
+        stroke="${css("--line")}" stroke-width="1"/>`);
+      parts.push(`<text x="${M.l - 6}" y="${(y + 3.5).toFixed(1)}" text-anchor="end"
+        font-family="IBM Plex Mono, monospace" font-size="9.5" fill="${css("--ink-soft")}">${v.toFixed(2)}</text>`);
+    });
+    ks.forEach((k, i) => {
+      const value = step.scores[k];
+      const h = (value / top) * (H - M.t - M.b);
+      const x = M.l + i * bw + bw * 0.16;
+      const inPlateau = step.plateau.includes(k);
+      parts.push(`<rect x="${x.toFixed(1)}" y="${(H - M.b - h).toFixed(1)}" width="${(bw * 0.68).toFixed(1)}"
+        height="${Math.max(h, 1).toFixed(1)}" rx="2"
+        fill="${inPlateau ? css("--warn") : css("--accent")}" opacity="${k === step.best_k ? 1 : 0.62}"/>`);
+      parts.push(`<text x="${(x + bw * 0.34).toFixed(1)}" y="${H - M.b + 14}" text-anchor="middle"
+        font-family="IBM Plex Mono, monospace" font-size="10" fill="${css("--ink-soft")}">${k}</text>`);
+    });
+    parts.push(`<text x="${W / 2}" y="${H - 3}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif"
+      font-size="11" fill="${css("--ink-soft")}">число групп</text>`);
+    document.getElementById("sil").innerHTML = parts.join("");
+    document.getElementById("sil-note").textContent = step.plateau.length > 1
+      ? `Варианты ${step.plateau.join(", ")} отмечены оранжевым: между собой они практически не различаются, разница меньше 0.01. Значит, число групп выбрано неуверенно.`
+      : `Вариант ${step.best_k} выигрывает уверенно.`;
+  }
+
+  /* ---- профили групп ---- */
+  const UNITS = { growth_rate: "", product_yield: "", pH_tolerance: "", GC_content: " %", genome_size_mbp: " млн" };
+  function drawProfiles() {
+    const step = current();
+    const order = colorOrder(step);
+    document.getElementById("profiles").innerHTML = step.profiles.map((p) => {
+      const colour = css(order.get(p.cluster));
+      return `<div class="pcard" style="border-top-color:${colour}">
+        <h3>Группа ${p.cluster}</h3>
+        <div class="sub">${p.n_strains} бактерий · чаще всего ${RU_SOURCE[p.source_mode]}
+          (${Math.round(p.source_mode_share * 100)}%)</div>
+        <dl>${FEATURES.map((f) =>
+          `<dt>${f[1]}</dt><dd>${p[f[0]].toFixed(f[0] === "GC_content" ? 1 : 2)}${UNITS[f[0]]}</dd>`).join("")}
+          <dt>с плазмидой</dt><dd>${Math.round(p.plasmid_share * 100)}%</dd></dl></div>`;
+    }).join("");
+  }
+
+  /* ---- показания и вердикт ---- */
+  function drawReadout() {
+    const step = current();
+    document.getElementById("readout").innerHTML = [
+      ["Вес пометок", step.share.toFixed(2)],
+      ["Вес измерений", step.weights.quantitative.toFixed(2)],
+      ["Групп найдено", step.best_k],
+      ["Кучность", step.silhouette.toFixed(3)],
+      ["Совпало с правдой", step.ari_ecotype.toFixed(2)],
+      ["Совпало с пометкой", step.ari_source.toFixed(2)],
+    ].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+    const box = document.getElementById("verdict");
+    const isAssignment = Math.abs(step.share - D.reference_share) < 1e-9;
+    let text, warn = false;
+    if (step.ari_ecotype >= 0.99) {
+      text = "<b>Идеально.</b> Все бактерии разложены по своим настоящим группам. Пометки учитываются " +
+        "слабо, и решают измерения — как и должно быть.";
+    } else if (step.ari_ecotype > step.ari_source) {
+      text = "<b>Хорошо.</b> Разбиение ближе к настоящим группам, чем к пометкам. Но уже не идеально: " +
+        "часть бактерий ушла не туда.";
+    } else {
+      warn = true;
+      text = "<b>Сбой.</b> Разбиение повторяет пометку о месте находки точнее (" +
+        step.ari_source.toFixed(2) + "), чем настоящее устройство данных (" + step.ari_ecotype.toFixed(2) +
+        "). Бактерии группируются по надписи в таблице, а не по своим свойствам.";
+    }
+    if (isAssignment) text += " <em>Это положение — веса из условия задачи.</em>";
+    box.innerHTML = text;
+    box.className = "verdict" + (warn ? " warn" : "");
+  }
+
+  /* ---- разбор пары ---- */
+  const idx = (i, j) => { /* позиция пары в верхнем треугольнике */
+    if (i > j) [i, j] = [j, i];
+    return (n * i - (i * (i + 1)) / 2) + (j - i - 1);
+  };
+  const selA = document.getElementById("pair-a");
+  const selB = document.getElementById("pair-b");
+  const options = D.strains.map((s, i) =>
+    `<option value="${i}">${s.strain_id} — ${RU_SOURCE[s.source]}${s.has_plasmid ? ", с плазмидой" : ""}</option>`
+  ).join("");
+  selA.innerHTML = options; selB.innerHTML = options;
+  selA.value = 0; selB.value = 1;
+
+  function drawPair() {
+    const i = +selA.value, j = +selB.value;
+    const step = current();
+    const w = step.weights;
+    if (i === j) {
+      document.getElementById("pair-stack").innerHTML = "";
+      document.getElementById("pair-breakdown").innerHTML =
+        '<div class="note" style="grid-column:1/-1">Выберите два разных штамма.</div>';
+      return;
+    }
+    const k = idx(i, j);
+    const rows = [
+      ["Пять измеренных чисел", D.components.quantitative[k], w.quantitative, "--c2"],
+      ["Плазмида", D.components.binary[k], w.binary, "--c1"],
+      ["Место находки", D.components.categorical[k], w.categorical, "--c3"],
+    ];
+    const total = rows.reduce((a, r) => a + r[1] * r[2], 0);
+    document.getElementById("pair-stack").innerHTML = rows.map((r) =>
+      `<i style="background:${css(r[3])};width:${total > 0 ? (r[1] * r[2] / total) * 100 : 0}%"
+        title="${r[0]}"></i>`).join("");
+    document.getElementById("pair-breakdown").innerHTML = rows.map((r) =>
+      `<span><span class="dot" style="background:${css(r[3])}"></span>${r[0]}</span>
+       <span class="note">${r[1].toFixed(3)} × вес ${r[2].toFixed(2)}</span>
+       <b>${(r[1] * r[2]).toFixed(3)}</b>`).join("") +
+      `<span style="font-weight:600">Итого непохожесть</span><span></span>
+       <b style="font-weight:600">${total.toFixed(3)}</b>`;
+  }
+
+  /* ---- почему пометка перевешивает ---- */
+  function drawGap() {
+    const gap = D.separating_gap.separating_gap;
+    const W = 640, H = 230, M = { l: 200, r: 60, t: 24, b: 24 };
+    const scale = 0.45;
+    const sw = (v) => (v / scale) * (W - M.l - M.r);
+    const bars = [
+      ["Вся разделяющая сила\nпяти измерений", gap, css("--c2")],
+      ["Штраф за разное место\nнаходки (вес 0.2)", 0.2, css("--c3")],
+      ["Штраф за разную плазмиду\n(вес 0.2)", 0.2, css("--c1")],
+    ];
+    const parts = [];
+    bars.forEach((b, i) => {
+      const y = M.t + i * 62;
+      b[0].split("\n").forEach((line, li) =>
+        parts.push(`<text x="${M.l - 14}" y="${y + 18 + li * 14}" text-anchor="end"
+          font-family="IBM Plex Sans, sans-serif" font-size="12" fill="${css("--ink")}">${line}</text>`));
+      parts.push(`<rect x="${M.l}" y="${y}" width="${sw(b[1]).toFixed(1)}" height="34" rx="3" fill="${b[2]}"/>`);
+      parts.push(`<text x="${(M.l + sw(b[1]) + 10).toFixed(1)}" y="${y + 22}"
+        font-family="IBM Plex Mono, monospace" font-size="13" font-weight="500"
+        fill="${css("--ink")}">${b[1].toFixed(3)}</text>`);
+    });
+    parts.push(`<line x1="${(M.l + sw(gap)).toFixed(1)}" y1="${M.t - 6}"
+      x2="${(M.l + sw(gap)).toFixed(1)}" y2="${H - M.b}" stroke="${css("--ink-soft")}"
+      stroke-width="1" stroke-dasharray="4 3"/>`);
+    document.getElementById("gap").innerHTML = parts.join("");
+    document.getElementById("gap-val").textContent = gap.toFixed(3);
+  }
+
+  /* ---- проверка на случайность ---- */
+  function drawNull() {
+    const scores = D.significance.null_scores;
+    const observed = D.significance.observed;
+    const W = 640, H = 250, M = { l: 40, r: 20, t: 20, b: 40 };
+    const lo = Math.min(...scores) - 0.01, hi = Math.max(observed, ...scores) + 0.02;
+    const bins = 28, counts = new Array(bins).fill(0);
+    scores.forEach((v) => counts[Math.min(bins - 1, Math.floor(((v - lo) / (hi - lo)) * bins))]++);
+    const top = Math.max(...counts);
+    const bw = (W - M.l - M.r) / bins;
+    const sx = (v) => M.l + ((v - lo) / (hi - lo)) * (W - M.l - M.r);
+    const parts = [];
+    counts.forEach((c, i) => {
+      const h = (c / top) * (H - M.t - M.b);
+      parts.push(`<rect x="${(M.l + i * bw).toFixed(1)}" y="${(H - M.b - h).toFixed(1)}"
+        width="${(bw - 1).toFixed(1)}" height="${h.toFixed(1)}" fill="${css("--ink-soft")}" opacity="0.5"/>`);
+    });
+    parts.push(`<line x1="${sx(observed).toFixed(1)}" y1="${M.t - 8}" x2="${sx(observed).toFixed(1)}"
+      y2="${H - M.b}" stroke="${css("--c1")}" stroke-width="2.5"/>`);
+    parts.push(`<text x="${sx(observed).toFixed(1)}" y="${M.t - 12}" text-anchor="end"
+      font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600"
+      fill="${css("--c1")}">наши группы: ${observed.toFixed(3)}</text>`);
+    [lo, (lo + hi) / 2, hi].forEach((v) =>
+      parts.push(`<text x="${sx(v).toFixed(1)}" y="${H - M.b + 18}" text-anchor="middle"
+        font-family="IBM Plex Mono, monospace" font-size="10" fill="${css("--ink-soft")}">${v.toFixed(2)}</text>`));
+    parts.push(`<line x1="${M.l}" y1="${H - M.b}" x2="${W - M.r}" y2="${H - M.b}"
+      stroke="${css("--line")}" stroke-width="1"/>`);
+    parts.push(`<text x="${W / 2}" y="${H - 6}" text-anchor="middle"
+      font-family="IBM Plex Sans, sans-serif" font-size="11"
+      fill="${css("--ink-soft")}">кучность на перемешанных данных</text>`);
+    document.getElementById("null").innerHTML = parts.join("");
+    const beaten = scores.filter((v) => v >= observed).length;
+    document.getElementById("null-text").innerHTML =
+      `Перемешали ${D.significance.n_draws} раз. Ни одна перемешанная версия не дала кучность выше нашей ` +
+      `(таких оказалось ${beaten}). Вероятность получить такой результат случайно — ` +
+      `<b>${D.significance.p_value.toFixed(3)}</b>, то есть меньше одного шанса из ста. ` +
+      `Группы настоящие.`;
+  }
+
+  function redraw() { drawTable(); drawMap(); drawSilhouette(); drawProfiles(); drawReadout(); drawPair(); }
+
+  document.getElementById("weight").addEventListener("input", redraw);
+  selA.addEventListener("change", drawPair);
+  selB.addEventListener("change", drawPair);
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { redraw(); drawGap(); drawNull(); });
+
+  redraw(); drawGap(); drawNull();
+})();
+</script>

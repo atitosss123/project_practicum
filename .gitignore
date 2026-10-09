@@ -4,3 +4,5 @@ __pycache__/
 .ipynb_checkpoints/
 out/
 .DS_Store
+stand/index.built.html
+stand/*.png

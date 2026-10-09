@@ -17,8 +17,16 @@
 | На 20 объектах высокий силуэт сам по себе ничего не значит | На 300 равномерных наборах без структуры медиана силуэта 0.307, отдельные выборки доходят до 0.420 |
 | Веса из условия отдают решающую роль категориальному признаку | Плоский штраф 0.2 за несовпадение источника = 75% разделяющей способности пяти количественных признаков; при весе 0.15 экотипы восстанавливаются полностью |
 
-Разбор — в [notebooks/analysis.ipynb](notebooks/analysis.ipynb), принятые решения —
-в [docs/PIPELINE.md](docs/PIPELINE.md), условие задачи — в [docs/task-source.docx](docs/task-source.docx).
+## Что где смотреть
+
+| Что нужно | Куда идти |
+|---|---|
+| Отчёт для сдачи | [docs/REPORT.md](docs/REPORT.md) |
+| Интерактивный стенд: покрутить веса и увидеть, как ломается разбиение | [stand/](stand/) |
+| Пошаговый разбор с графиками | [notebooks/analysis.ipynb](notebooks/analysis.ipynb) |
+| Принятые решения и отвергнутые варианты | [docs/PIPELINE.md](docs/PIPELINE.md) |
+| База данных с результатами | [db/README.md](db/README.md) |
+| Условие задачи | [docs/task-source.docx](docs/task-source.docx) |
 
 ## Запуск
 
@@ -44,6 +52,18 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest tests/ -q
 ```
 
+База данных — хранит исходные данные и все посчитанные результаты:
+
+```bash
+brew services start postgresql@16 && createdb strains && .venv/bin/python db/load.py --create-schema
+```
+
+Стенд — статическая страница, пересобирается после изменения расчёта:
+
+```bash
+.venv/bin/python scripts/build_stand_data.py && .venv/bin/python stand/build.py
+```
+
 ## Что где лежит
 
 | Путь | Назначение |
@@ -59,6 +79,11 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 | [src/sensitivity.py](src/sensitivity.py) | Устойчивость разбиения к выбору весов |
 | [src/viz.py](src/viz.py) | Дендрограмма, PCA, MDS |
 | [scripts/check_calibration.py](scripts/check_calibration.py) | Проверка калибровки теста значимости |
+| [scripts/build_stand_data.py](scripts/build_stand_data.py) | Предрасчёт всех положений ползунка для стенда |
+| [db/schema.sql](db/schema.sql) | Схема базы данных |
+| [db/load.py](db/load.py) | Загрузка данных и результатов в базу |
+| [db/queries.sql](db/queries.sql) | Восемь запросов, по одному на каждый вывод отчёта |
+| [stand/index.html](stand/index.html) | Исходник интерактивного стенда |
 
 Данные: [strains_features.csv](data/strains_features.csv) — основной набор с заложенными
 экотипами, [strains_uniform.csv](data/strains_uniform.csv) — контрольный по коду из условия,
