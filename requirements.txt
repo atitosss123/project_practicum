@@ -1,0 +1,6 @@
+# Окружение: системный Python 3.9.6 (macOS), venv в .venv/
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
